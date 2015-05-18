@@ -230,7 +230,8 @@ class MTBF_Driver:
             with open("/proc/meminfo", "r") as mem_info:
                 self.logger.info(mem_info.read())
             if self.charge > 0:
-                self.logger.info("\n*Current Sleep Time: %.3f seconds" % ((self.charge - 1)*3600*int(os.getenv("CHARGE_HOUR"))))
+                self.sleep_time = (self.charge - 1) * 3600 * int(os.getenv("CHARGE_HOUR"))
+                self.logger.info("\n*Current Sleep Time: %.3f seconds" % self.sleep_time)
 
             ## This is a temporary solution for stop the tests
             ## If there should be any interface there for us
@@ -240,7 +241,16 @@ class MTBF_Driver:
                 #add this for checking all test cases will continuley failed on next round
                 if self.retry == 1:
                     self.deinit()
-                    break
+                    return_result = {"passed": self.passed,
+                                     "failed": self.failed,
+                                     "todo": self.todo,
+                                     "total_time": self.running_time,
+                                     "sleep_time": self.sleep_time}
+                    if self.runner.passed == 0:
+                        return_result['status'] = 0
+                    else:
+                        return_result['status'] = 1
+                    return return_result
                 self.get_report()
                 self.retry += 1
                 time.sleep(60)
@@ -250,7 +260,8 @@ class MTBF_Driver:
         self.running_time = time.time() - self.start_time
         self.logger.info("\n*Total MTBF Time: %.3f seconds" % self.running_time)
         if self.charge > 0:
-            self.logger.info("\nTotal Sleep Time: %.3f seconds" % ((self.charge - 1)*3600*int(os.getenv("CHARGE_HOUR"))))
+            self.sleep_time = (self.charge - 1)*3600*int(os.getenv("CHARGE_HOUR"))
+            self.logger.info("\nTotal Sleep Time: %.3f seconds" % self.sleep_time)
         self.logger.info('\nMTBF TEST SUMMARY\n-----------------')
         self.logger.info('passed: %d' % self.passed)
         self.logger.info('failed: %d' % self.failed)
@@ -358,15 +369,16 @@ def main(**kwargs):
     if not os.getenv("MTBF_REPLAY"):
         rp = open(step_log, 'w')
     mtbf = MTBF_Driver(time=time, rp=rp, **kwargs)
+    return_result = {}
     if not os.getenv("MTBF_REPLAY"):
         signal.signal(signal.SIGALRM, mtbf.time_up)
         signal.alarm(mtbf.duration)
-        mtbf.start_gaiatest()
+        return_result = mtbf.start_gaiatest()
         signal.alarm(0)
-        return True
+        return return_result
     else:
-        mtbf.start_gaiatest()
-        return True
+        return_result = mtbf.start_gaiatest()
+        return return_result
     logcat_cmd = "adb wait-for-device logcat -v threadtime -d > last_logcat"
     os.system(logcat_cmd)
 
