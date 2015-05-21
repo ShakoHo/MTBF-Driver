@@ -196,7 +196,7 @@ class MTBF_Driver:
             self.ttr = self.ttr + list(file_name)
 
             current_runtime = time.time() - self.start_time
-            if self.charge > 0 and (current_runtime / 86400) >= self.charge:
+            if self.charge > 0 and (current_runtime / 43200) >= self.charge:
                 file_name = (u'test_charge.py',)
                 file_path = (os.path.join(self.ori_dir, "tests", "test_charge.py"),)
                 self.charge += 1
