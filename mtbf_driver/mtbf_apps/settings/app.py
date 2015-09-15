@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette_driver.by import By
+from marionette_driver import expected, By, Wait
 from gaiatest.apps.settings.app import Settings
 import time
 
@@ -21,7 +21,7 @@ class MTBF_Settings(Settings):
         self.wait_for_condition(lambda m: m.find_element(*self._cellanddata_menu_locator).get_attribute('aria-disabled') != 'true')
 
     def go_back(self):
-        self.wait_for_element_displayed(*self._header_locator)
+        Wait(self.marionette).until(expected.element_displayed(*self._header_locator))
         header = self.marionette.find_element(*self._header_locator)
         # TODO: replace this hard coded value with tap on the back button, after Bug 1061698 is fixed
         while not self.marionette.execute_script("return window.wrappedJSObject.Settings && window.wrappedJSObject.Settings._currentPanel === '#root'"):
